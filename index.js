@@ -53,38 +53,34 @@ function createBot() {
             console.log("⏱️ Offline timer reset.");
         }
 
-        // AdvancedLogin Chat Commands (1.5s delay)
+        // AdvancedLogin Chat Commands
         setTimeout(() => {
             bot.chat(`/register ${config.password} ${config.password}`);
             bot.chat(`/login ${config.password}`);
             console.log("🔑 AdvancedLogin commands sent.");
         }, 1500); 
 
-        // 🌟 HUMAN-LIKE MOVEMENT & HEAD ROTATION (Har 4 seconds me start hoga)
+        // 🌟 HUMAN-LIKE MOVEMENT & HEAD ROTATION (4s loop, 3s walk)
         if (moveInterval) clearInterval(moveInterval);
         moveInterval = setInterval(() => {
             if (!bot || !bot.entity) return;
 
-            // 1. Random Head Movement (Yaw aur Pitch badalna)
-            const randomYaw = (Math.random() * 360) * (Math.PI / 180); // 0 to 360 degree
-            const randomPitch = ((Math.random() * 60) - 30) * (Math.PI / 180); // -30 to 30 degree (Upar/Neeche)
+            const randomYaw = (Math.random() * 360) * (Math.PI / 180);
+            const randomPitch = ((Math.random() * 60) - 30) * (Math.PI / 180);
             bot.look(randomYaw, randomPitch, true);
 
-            // 2. Random Direction choosing
             const directions = ['forward', 'back', 'left', 'right'];
             const randomDir = directions[Math.floor(Math.random() * directions.length)];
             
-            // Bot 3 seconds tak continuous chalega
             bot.setControlState(randomDir, true);
             
-            // Exact 3 seconds baad chalna band karega
             setTimeout(() => {
                 if (bot && bot.entity) {
                     bot.setControlState(randomDir, false);
                 }
             }, 3000);
 
-        }, 4000); // Har 4 second me trigger hoga
+        }, 4000);
 
         // Jump loop (Har 10 seconds me)
         if (jumpInterval) clearInterval(jumpInterval);
@@ -96,13 +92,53 @@ function createBot() {
             }, 500);
         }, 10000);
 
-        // Chat Loop (Har 1 Hour me 1 baar)
+        // 🌟 UPDATED: Chat Loop (Ab har 10 Minutes me 1 baar msg bhejea)
         if (chatInterval) clearInterval(chatInterval);
         chatInterval = setInterval(() => {
             if (!bot || !bot.entity) return;
             bot.chat("IM GRINDING.....");
             console.log("💬 Chat sent: IM GRINDING.....");
-        }, 60 * 60000);
+        }, 10 * 60000); // 10 Minutes * 60000ms
+    });
+
+    // 🌟 NEW: MANIOHOST CAPTCHA & VERIFICATION SOLVER
+    bot.on('message', (jsonMsg) => {
+        const messageText = jsonMsg.toString();
+        
+        // Kisi normal player ke messages ko ignore karega, sirf System/Server triggers ko read karega
+        if (messageText.includes("MangoHost AFK Verification") || messageText.includes("AFK VERIFICATION") || messageText.includes("Type the answer in chat")) {
+            console.log(`🚨 MangoHost Captcha Alert Detected: "${messageText}"`);
+
+            // Regular Expression jo text me se numbers aur symbols (जैसे 31 + 9) ko alag nikalega
+            const mathMatch = messageText.match(/(\d+)\s*([\+\-\*\/])\s*(\d+)/);
+
+            if (mathMatch) {
+                const num1 = parseInt(mathMatch[1]);
+                const operator = mathMatch[2];
+                const num2 = parseInt(mathMatch[3]);
+                let correctAnswer;
+
+                // Sahi operator se math solve karna
+                if (operator === '+') correctAnswer = num1 + num2;
+                else if (operator === '-') correctAnswer = num1 - num2;
+                else if (operator === '*') correctAnswer = num1 * num2;
+                else if (operator === '/') correctAnswer = num1 / num2;
+
+                if (correctAnswer !== undefined) {
+                    console.log(`🧠 Bot calculated answer: ${num1} ${operator} ${num2} = ${correctAnswer}`);
+                    
+                    // 20 Seconds ka delay taaki host ko lagay real insaan type kar raha hai (Safe zone under 5 mins)
+                    setTimeout(() => {
+                        if (bot && bot.entity) {
+                            bot.chat(correctAnswer.toString());
+                            console.log(`📤 Captcha Answer sent to chat: ${correctAnswer}`);
+                        }
+                    }, 20000); // 20 Seconds delay
+                }
+            } else {
+                console.log("⚠️ Verification alert toh mila par Math equation format match nahi hua.");
+            }
+        }
     });
 
     bot.on('end', (reason) => {
@@ -119,7 +155,6 @@ function createBot() {
             }, config.maxOfflineTime);
         }
 
-        // Server anytime online aaye toh join karne ke liye 20s ka loop chalta rahega
         setTimeout(createBot, config.reconnectInterval);
     });
 
@@ -127,3 +162,4 @@ function createBot() {
 }
 
 createBot();
+    
